@@ -1,23 +1,30 @@
 package com.digitalservicing.usermanager.service;
 
+import com.digitalservicing.usermanager.dto.UserDto;
+import com.digitalservicing.usermanager.exception.LoginException;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
 import com.digitalservicing.usermanager.entity.UserProfile;
 import com.digitalservicing.usermanager.entity.User;
+import com.digitalservicing.usermanager.repository.UserProfileRepository;
 import com.digitalservicing.usermanager.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.service.invoker.UrlArgumentResolver;
 
+import java.net.URL;
 import java.util.Optional;
-import java.util.Set;
 
 @Service
 public class UserServiceImpl implements UserService{
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private UserProfileRepository userProfileRepository;
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     @Override
@@ -27,17 +34,28 @@ public class UserServiceImpl implements UserService{
 
     @Transactional(readOnly = true)
     @Override
-    public User login(User aUser){
-        Optional<User>  optionalUser = userRepository.findUser(aUser.getUserName(),
-                aUser.getUserPassword());
-        return optionalUser.orElseThrow(UserNotFoundException::new);
+    public User login(String aUserName, String aPassword){
+        Optional<User>  optionalUser = userRepository.findUser(aUserName,
+                aPassword);
+        return optionalUser.orElseThrow(LoginException::new);
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     @Override
-    public User addProfileToUser(Long aUserId, Set<UserProfile> profiles) {
+    public void addProfileToUser(Long aUserId, URL url) {
+        UserProfile userProfile = new UserProfile();
+        userProfile.setProfileUri(url);
+        userProfileRepository.save(userProfile);
+        Optional<User> userOptional = userRepository.findById(aUserId);
+        User user = userOptional.get();
+        user.setUserId(aUserId);
+        user.setUserProfile(userProfile);
+        userRepository.save(user);
+    }
+
+    @Override
+    public User getUser(Long aUserId) {
         Optional<User> aUser = userRepository.findById(aUserId);
-        userRepository.save(aUser.get());
         return aUser.orElseThrow(UserNotFoundException::new);
     }
 }

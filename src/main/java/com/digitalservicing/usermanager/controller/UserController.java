@@ -1,28 +1,36 @@
 package com.digitalservicing.usermanager.controller;
 
-import com.digitalservicing.usermanager.entity.UserProfile;
+import com.digitalservicing.usermanager.dto.UserDto;
 import com.digitalservicing.usermanager.entity.User;
+import com.digitalservicing.usermanager.exception.LoginException;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
 import com.digitalservicing.usermanager.service.ImgurServiceImpl;
 import com.digitalservicing.usermanager.service.UserServiceImpl;
 import com.mashape.unirest.http.exceptions.UnirestException;
+import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
+import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
-import java.util.Set;
+import java.net.URL;
 
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
+@Validated
 public class UserController {
 
     @Autowired
     private UserServiceImpl userService;
-
     @Autowired
     private ImgurServiceImpl imgurService;
+
+    @Autowired
+    private ModelMapper modelMapper;
 
     @GetMapping("/version")
     public String version(){
@@ -30,22 +38,63 @@ public class UserController {
     }
 
     @PostMapping(value = "/user")
-    public User addUser(User aUser){
+    @ResponseStatus(HttpStatus.CREATED)
+    public User addUser(@Valid User aUser){
         return this.userService.addUser(aUser);
     }
 
     @GetMapping("/user/login")
-    public void login(User user) throws UserNotFoundException{
-        this.userService.login(user);
+    @ResponseStatus(HttpStatus.OK)
+    public void login(@RequestParam String userName, @RequestParam String password) throws LoginException {
+        log.info("Logging in with name {} ", userName);
+        this.userService.login(userName, password);
     }
 
-    @PutMapping("/user/{userid}/profile")
-    public void addProfileToUser(@PathVariable Long userid, Set<UserProfile> profiles) throws UserNotFoundException{
-        this.userService.addProfileToUser(userid, profiles);
+    @PutMapping("/user/profile")
+    @ResponseStatus(HttpStatus.CREATED)
+    public void addProfileToUser(@RequestParam Long userid, @RequestParam URL profileUrl) throws UserNotFoundException{
+        log.info("Adding profile to user with userid {} and profile {}", userid, profileUrl);
+        this.userService.addProfileToUser(userid, profileUrl);
+    }
+    @GetMapping("/user/{userid}/profile")
+    public UserDto getUser(@PathVariable Long userid) throws UserNotFoundException{
+        log.info("Invoking get user with userid {}", userid);
+        User user = this.userService.getUser(userid);
+        return convertToDto(user);
     }
 
     @PostMapping("/user/image")
+    @ResponseStatus(HttpStatus.ACCEPTED)
     public void uploadToImgur(@RequestParam("fileName") String fileName) throws UnirestException {
+        //TODO: Validate login
+        log.info("Invoking upload of Image with fileName {}", fileName);
         imgurService.uploadImage(new File(fileName));
+    }
+
+    @GetMapping("/user/image")
+    public void getFromImgur(@RequestParam("fileName") String fileName) throws UnirestException {
+        //TODO: Validate login
+        log.info("Invoking Get of Image with fileName {}", fileName);
+        imgurService.deleteImage(new File(fileName));
+    }
+
+    @DeleteMapping("/user/image")
+    public void deleteFromImgur(@RequestParam("fileName") String fileName) throws UnirestException {
+        //TODO: Validate login
+        log.info("Invoking Delete of Image with fileName {}", fileName);
+        imgurService.deleteImage(new File(fileName));
+    }
+
+    private UserDto convertToDto(User user) {
+        UserDto userDto = modelMapper.map(user, UserDto.class);
+        if (user.getUserProfile() != null) {
+            userDto.setProfileUri(user.getUserProfile().getProfileUri());
+        }
+        return userDto;
+    }
+
+    private User convertToEntity(UserDto userDto)  {
+        User user = modelMapper.map(userDto, User.class);
+        return user;
     }
 }

@@ -5,7 +5,6 @@ import com.mashape.unirest.http.JsonNode;
 import com.mashape.unirest.http.Unirest;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
 import java.io.File;
@@ -36,5 +35,16 @@ public class ImgurServiceImpl implements ImgurService{
         Unirest.setTimeouts(0, 0);
         HttpResponse<String> response = Unirest.get(BASE_IMAGE_URL + "{{imageHash}}")
                 .header("Authorization", "Client-ID " + imgurClientId).asString();
+    }
+
+    @Override
+    public int deleteImage(File aFile) throws UnirestException {
+        Unirest.setTimeouts(0, 0);
+        HttpResponse<JsonNode> jsonResponse = Unirest.delete("https://api.imgur.com/3/image/{{imageHash}}")
+                .header("Authorization", "Bearer {{accessToken}}")
+                .field("file", aFile)
+                .asJson();
+
+        return jsonResponse.getStatus();
     }
 }
