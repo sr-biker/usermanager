@@ -1,4 +1,6 @@
 # Digital Servicing User Manager
+## IMPORTANT
+Access token `usermanager.imgur.accessToken `is not checked in for security reasons and is sent via email. 
 
 ## Requirements
 
@@ -22,21 +24,18 @@ Alternatively you can use the [Spring Boot Maven plugin](https://docs.spring.io/
 
 ## Deploying the application 
 
-To deploy the usermanager application, do  is having a docker image (and possibly deploy to Jenkins or any other pipeline of your choice):
+To deploy the usermanager application, package the application and deploy it in the Jenkins server(not included) via the Jenkins file
+
+```shell
+mvn spring-boot:build-image 
+docker run docker.io/library/usermanager:0.0.1-SNAPSHOT
+```
+Alternately, use docker to build and tag
 
 ```shell
 docker build .
-```
-
-This will create:
-
-* A docker image called "springboot-maven3-centos"
-
-
-If you want to access the app from outside your OpenShift installation, you have to expose the springboot-sample-app service:
-
-```shell
-oc expose springboot-sample-app --hostname=www.example.com
+docker tag <imageid> usermanager:latest
+docker run usermanager:latest
 ```
 
 ## Copyright
