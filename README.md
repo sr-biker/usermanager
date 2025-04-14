@@ -1,6 +1,7 @@
 # Digital Servicing User Manager
 ## IMPORTANT
-Access token `usermanager.imgur.accessToken `is not checked in for security reasons and is sent via email.
+Access token `usermanager.imgur.accessToken ` and `usermanager.kafka.password` are not checked in 
+for security reasons and is sent via email.
 
 ## Requirements
 
@@ -8,6 +9,7 @@ For building and running the application locally you need:
 
 - [JDK 21](https://docs.aws.amazon.com/corretto/latest/corretto-21-ug/downloads-list.html)
 - [Maven 3](https://maven.apache.org)
+- `chmod +x setup_kafka.sh; ./setup_kafka.sh ` on the same JVM as the application is going to run.
 
 For deploying the application you need:
 - [Docker](https://www.docker.com)
