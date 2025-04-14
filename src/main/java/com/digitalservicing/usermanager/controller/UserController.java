@@ -4,6 +4,7 @@ import com.digitalservicing.usermanager.dto.UserDto;
 import com.digitalservicing.usermanager.entity.User;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
 import com.digitalservicing.usermanager.service.ImgurService;
+import com.digitalservicing.usermanager.service.KafkaProducerService;
 import com.digitalservicing.usermanager.service.UserService;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import jakarta.validation.Valid;
@@ -35,6 +36,9 @@ public class UserController {
     private ImgurService imgurService;
 
     @Autowired
+    private KafkaProducerService kafkaProducerService;
+
+    @Autowired
     private ModelMapper modelMapper;
 
     @GetMapping("/version")
@@ -60,6 +64,7 @@ public class UserController {
     public void addProfileToUser(@RequestParam Long userid, @RequestParam URL profileUrl) throws UserNotFoundException{
         log.info("Adding profile to user with userid {} and profile {}", userid, profileUrl);
         this.userService.addProfileToUser(userid, profileUrl);
+        kafkaProducerService.sendMessage("Userid " + userid + " profileurl " + profileUrl);
     }
     @GetMapping("/user/{userid}/profile")
     public UserDto getUser(@PathVariable Long userid) throws UserNotFoundException{
