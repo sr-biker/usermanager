@@ -6,13 +6,19 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.core.io.Resource;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.util.ResourceUtils;
 
+import java.io.File;
+import java.io.FileNotFoundException;
 import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URL;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserControllerIntegrationTest {
@@ -56,6 +62,17 @@ public class UserControllerIntegrationTest {
         Assertions.assertEquals(HttpStatus.OK, responseEntity.getStatusCode() );
         Assertions.assertEquals(199999, responseEntity.getBody().getUserId() );
         Assertions.assertEquals("JOHN DOE", responseEntity.getBody().getUserName() );
+    }
+
+    @Test
+    void testUploadImage() throws FileNotFoundException {
+        File imageFile = ResourceUtils.getFile(
+                "classpath:sample.jpg");
+        URI postUrl = URI.create("/api/v1/user/image?fileName=" + imageFile.getAbsolutePath());
+
+        ResponseEntity<URL> responseEntity = testRestTemplate.postForEntity(postUrl, null, URL.class);
+        Assertions.assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode() );
+        Assertions.assertNotNull(responseEntity.getBody());
     }
 
 }

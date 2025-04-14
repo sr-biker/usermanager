@@ -4,8 +4,8 @@ import com.digitalservicing.usermanager.dto.UserDto;
 import com.digitalservicing.usermanager.entity.User;
 import com.digitalservicing.usermanager.exception.LoginException;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
-import com.digitalservicing.usermanager.service.ImgurServiceImpl;
-import com.digitalservicing.usermanager.service.UserServiceImpl;
+import com.digitalservicing.usermanager.service.ImgurService;
+import com.digitalservicing.usermanager.service.UserService;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import jakarta.validation.Valid;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +16,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URL;
 
 @RestController
@@ -25,9 +26,9 @@ import java.net.URL;
 public class UserController {
 
     @Autowired
-    private UserServiceImpl userService;
+    private UserService userService;
     @Autowired
-    private ImgurServiceImpl imgurService;
+    private ImgurService imgurService;
 
     @Autowired
     private ModelMapper modelMapper;
@@ -65,24 +66,24 @@ public class UserController {
 
     @PostMapping("/user/image")
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public void uploadToImgur(@RequestParam("fileName") String fileName) throws UnirestException {
+    public URL uploadToImgur(@RequestParam("fileName") String fileName) throws UnirestException, IOException {
         //TODO: Validate login
         log.info("Invoking upload of Image with fileName {}", fileName);
-        imgurService.uploadImage(new File(fileName));
+        return imgurService.uploadImage(new File(fileName));
     }
 
     @GetMapping("/user/image")
-    public void getFromImgur(@RequestParam("fileName") String fileName) throws UnirestException {
+    public void getFromImgur(@RequestParam String imageHash) throws UnirestException {
         //TODO: Validate login
-        log.info("Invoking Get of Image with fileName {}", fileName);
-        imgurService.deleteImage(new File(fileName));
+        log.info("Invoking Get of Image with hash {}", imageHash);
+        imgurService.getImage(imageHash);
     }
 
     @DeleteMapping("/user/image")
-    public void deleteFromImgur(@RequestParam("fileName") String fileName) throws UnirestException {
+    public void deleteFromImgur(@RequestParam String imageHash) throws UnirestException {
         //TODO: Validate login
-        log.info("Invoking Delete of Image with fileName {}", fileName);
-        imgurService.deleteImage(new File(fileName));
+        log.info("Invoking Delete of Image with hash {}", imageHash);
+        imgurService.deleteImage(imageHash);
     }
 
     private UserDto convertToDto(User user) {
