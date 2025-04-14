@@ -8,6 +8,7 @@ import com.digitalservicing.usermanager.service.ImgurService;
 import com.digitalservicing.usermanager.service.UserService;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import jakarta.validation.Valid;
+import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,10 +20,14 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
+/**
+ * Rest controller for the application.
+ */
 @RestController
 @RequestMapping("/api/v1")
 @Slf4j
 @Validated
+@Builder
 public class UserController {
 
     @Autowired

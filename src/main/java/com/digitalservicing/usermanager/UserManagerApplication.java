@@ -9,6 +9,9 @@ import org.springframework.scheduling.annotation.EnableAsync;
 import java.io.IOException;
 import java.util.TimeZone;
 
+/**
+ * Entry point for the application.
+ */
 @SpringBootApplication
 @EnableAsync
 public class UserManagerApplication {

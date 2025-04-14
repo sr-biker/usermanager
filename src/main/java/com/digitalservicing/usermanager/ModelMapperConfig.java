@@ -4,6 +4,9 @@ import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Mapper to convert between entity and DTO objects.
+ */
 @Configuration
 public class ModelMapperConfig {
 
