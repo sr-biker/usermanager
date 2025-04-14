@@ -2,7 +2,6 @@ package com.digitalservicing.usermanager.controller;
 
 import com.digitalservicing.usermanager.dto.UserDto;
 import com.digitalservicing.usermanager.entity.User;
-import com.digitalservicing.usermanager.exception.LoginException;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
 import com.digitalservicing.usermanager.service.ImgurService;
 import com.digitalservicing.usermanager.service.UserService;
@@ -51,7 +50,7 @@ public class UserController {
 
     @GetMapping("/user/login")
     @ResponseStatus(HttpStatus.OK)
-    public void login(@RequestParam String userName, @RequestParam String password) throws LoginException {
+    public void login(@RequestParam String userName, @RequestParam String password)  {
         log.info("Logging in with name {} ", userName);
         this.userService.login(userName, password);
     }

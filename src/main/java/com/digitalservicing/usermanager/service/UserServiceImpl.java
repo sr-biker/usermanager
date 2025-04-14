@@ -1,7 +1,6 @@
 package com.digitalservicing.usermanager.service;
 
-import com.digitalservicing.usermanager.dto.UserDto;
-import com.digitalservicing.usermanager.exception.LoginException;
+import com.digitalservicing.usermanager.exception.UserLoginException;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
 import com.digitalservicing.usermanager.entity.UserProfile;
 import com.digitalservicing.usermanager.entity.User;
@@ -12,7 +11,6 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.web.service.invoker.UrlArgumentResolver;
 
 import java.net.URL;
 import java.util.Optional;
@@ -34,10 +32,10 @@ public class UserServiceImpl implements UserService{
 
     @Transactional(readOnly = true)
     @Override
-    public User login(String aUserName, String aPassword){
+    public User login(String aUserName, String aPassword) {
         Optional<User>  optionalUser = userRepository.findUser(aUserName,
                 aPassword);
-        return optionalUser.orElseThrow(LoginException::new);
+        return optionalUser.orElseThrow(UserLoginException::new);
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)

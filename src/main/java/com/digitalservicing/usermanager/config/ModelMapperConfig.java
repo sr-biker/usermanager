@@ -1,4 +1,4 @@
-package com.digitalservicing.usermanager;
+package com.digitalservicing.usermanager.config;
 
 import org.modelmapper.ModelMapper;
 import org.springframework.context.annotation.Bean;

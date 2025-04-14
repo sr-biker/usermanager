@@ -1,6 +1,6 @@
 # Digital Servicing User Manager
 ## IMPORTANT
-Access token `usermanager.imgur.accessToken `is not checked in for security reasons and is sent via email. 
+Access token `usermanager.imgur.accessToken `is not checked in for security reasons and is sent via email.
 
 ## Requirements
 
@@ -37,6 +37,12 @@ docker build .
 docker tag <imageid> usermanager:latest
 docker run usermanager:latest
 ```
+
+## API Docs
+
+Afer starting the application, openapi docs are accessible via the following link
+
+[Open API](http://localhost:8080/api-docs)
 
 ## Copyright
 
