@@ -4,7 +4,6 @@ import com.mashape.unirest.http.Unirest;
 import jakarta.annotation.PostConstruct;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.scheduling.annotation.EnableAsync;
 
 import java.io.IOException;
 import java.util.TimeZone;
@@ -13,11 +12,11 @@ import java.util.TimeZone;
  * Entry point for the application.
  */
 @SpringBootApplication
-@EnableAsync
 public class UserManagerApplication {
 
 	public static void main(String[] args) {
 		SpringApplication.run(UserManagerApplication.class, args);
+		initTimezone();
 		Runtime.getRuntime().addShutdownHook(new Thread(new Runnable() {
 			@Override
 			public void run() {
@@ -34,8 +33,7 @@ public class UserManagerApplication {
 		}
 	}
 
-	@PostConstruct
-	public void init(){
+	public static void initTimezone(){
 		TimeZone.setDefault(TimeZone.getTimeZone("UTC"));
 	}
 }

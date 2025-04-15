@@ -76,14 +76,12 @@ public class UserController {
     @PostMapping("/user/image")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public URL uploadToImgur(@RequestParam("fileName") String fileName) throws UnirestException, IOException {
-        //TODO: Validate login
         log.info("Invoking upload of Image with fileName {}", fileName);
         return imgurService.uploadImage(new File(fileName));
     }
 
     @GetMapping("/user/image")
     public void getFromImgur(@RequestParam String imageHash) throws UnirestException {
-        //TODO: Validate login
         log.info("Invoking Get of Image with hash {}", imageHash);
         imgurService.getImage(imageHash);
     }
