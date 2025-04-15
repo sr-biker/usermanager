@@ -20,6 +20,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 
+/**
+ * The tests rely on the sample data under resources folder.
+ */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class UserControllerIntegrationTest {
 
@@ -34,12 +37,18 @@ public class UserControllerIntegrationTest {
 
     }
 
+    /**
+     * Sanity test to see if the application is good.
+     */
     @Test
     void testVersion(){
        ResponseEntity<String> responseEntity = testRestTemplate.getForEntity("/api/v1/version",String.class);
        Assertions.assertEquals(HttpStatus.OK, responseEntity.getStatusCode());
     }
 
+    /**
+     * Functional test to see if a valid user can login.
+     */
     @Test
     void testLogin()  {
         ResponseEntity<String> responseEntity = testRestTemplate.getForEntity("/api/v1/user/login?userName=JOHN DOE&password=abcd",
@@ -47,6 +56,9 @@ public class UserControllerIntegrationTest {
         Assertions.assertEquals(HttpStatus.OK,  responseEntity.getStatusCode());
     }
 
+    /**
+     * Verify if the added profile URL is present.
+     */
     @Test
     void testAddProfileToUser() throws MalformedURLException {
         URI url = URI.create("/api/v1/user/profile?userid=299999&profileUrl=http://google.com");
@@ -56,6 +68,9 @@ public class UserControllerIntegrationTest {
         Assertions.assertEquals( URI.create("http://google.com").toURL(), responseEntity.getBody().getProfileUri() );
     }
 
+    /**
+     * Verify if the getUser returns data that matches the bootstrapped data.
+     */
     @Test
     void testGetUser()  {
         ResponseEntity<UserDto> responseEntity = testRestTemplate.getForEntity("/api/v1/user/199999/profile", UserDto.class);
@@ -64,6 +79,13 @@ public class UserControllerIntegrationTest {
         Assertions.assertEquals("JOHN DOE", responseEntity.getBody().getUserName() );
     }
 
+    /**
+     * This test does the following
+     * - Insert a sample image from the resources folder and validate if it successful.
+     *
+     * @throws FileNotFoundException
+     * @throws URISyntaxException
+     */
     @Test
     void testUploadImage() throws FileNotFoundException, URISyntaxException {
         File imageFile = ResourceUtils.getFile(
@@ -77,6 +99,14 @@ public class UserControllerIntegrationTest {
         Assertions.assertTrue(response.getStatusCode().is2xxSuccessful());
     }
 
+    /**
+     * This test does the following
+     *  - Insert a sample image and validate if it successful.
+     *  - Delete the image based on the hash and validate if it is successful.
+     *
+     * @throws FileNotFoundException
+     * @throws URISyntaxException
+     */
     @Test
     void testDeleteImage() throws FileNotFoundException, URISyntaxException {
         File imageFile = ResourceUtils.getFile(
@@ -96,6 +126,7 @@ public class UserControllerIntegrationTest {
         URI deleteUrl = URI.create("/api/v1/user/image?imageHash=" + imageHash);
         testRestTemplate.delete(deleteUrl);
 
+        //Get of the object should not be 200.
         ResponseEntity<String> response2 =  testRestTemplate.exchange(responseEntity.getBody().toURI(), HttpMethod.HEAD,
                 null, String.class);
         Assertions.assertNotEquals (200,response2.getStatusCode().is4xxClientError());
