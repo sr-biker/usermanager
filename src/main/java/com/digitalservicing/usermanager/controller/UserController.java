@@ -46,51 +46,56 @@ public class UserController {
         return "v1";
     }
 
-    @PostMapping(value = "/user")
+    @PostMapping(value = "/users")
     @ResponseStatus(HttpStatus.CREATED)
     public User addUser(@Valid User aUser){
         return this.userService.addUser(aUser);
     }
 
-    @GetMapping("/user/login")
+    @GetMapping("/users/login")
     @ResponseStatus(HttpStatus.OK)
     public void login(@RequestParam String userName, @RequestParam String password)  {
         log.info("Logging in with name {} ", userName);
         this.userService.login(userName, password);
     }
 
-    @PutMapping("/user/profile")
+    @PutMapping("/users/profile")
     @ResponseStatus(HttpStatus.CREATED)
     public void addProfileToUser(@RequestParam Long userid, @RequestParam URL profileUrl) throws UserNotFoundException{
         log.info("Adding profile to user with userid {} and profile {}", userid, profileUrl);
         this.userService.addProfileToUser(userid, profileUrl);
         kafkaProducerService.sendMessage("Userid " + userid + " profileurl " + profileUrl);
     }
-    @GetMapping("/user/{userid}/profile")
+    @GetMapping("/users/{userid}/profile")
     public UserDto getUser(@PathVariable Long userid) throws UserNotFoundException{
         log.info("Invoking get user with userid {}", userid);
         User user = this.userService.getUser(userid);
         return convertToDto(user);
     }
 
-    @PostMapping("/user/image")
+    @PostMapping("/users/image")
     @ResponseStatus(HttpStatus.ACCEPTED)
     public URL uploadToImgur(@RequestParam("fileName") String fileName) throws UnirestException, IOException {
         log.info("Invoking upload of Image with fileName {}", fileName);
         return imgurService.uploadImage(new File(fileName));
     }
 
-    @GetMapping("/user/image")
+    @GetMapping("/users/image")
     public void getFromImgur(@RequestParam String imageHash) throws UnirestException {
         log.info("Invoking Get of Image with hash {}", imageHash);
         imgurService.getImage(imageHash);
     }
 
-    @DeleteMapping("/user/image")
+    @DeleteMapping("/users/image")
     public void deleteFromImgur(@RequestParam String imageHash) throws UnirestException {
         //TODO: Validate login
         log.info("Invoking Delete of Image with hash {}", imageHash);
         imgurService.deleteImage(imageHash);
+    }
+
+    @GetMapping("/users")
+    public void exportCsv(){
+
     }
 
     private UserDto convertToDto(User user) {

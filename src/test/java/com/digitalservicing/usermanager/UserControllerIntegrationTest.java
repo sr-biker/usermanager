@@ -58,7 +58,7 @@ public class UserControllerIntegrationTest {
      */
     @Test
     void testLogin()  {
-        ResponseEntity<String> responseEntity = testRestTemplate.getForEntity("/api/v1/user/login?userName=JOHN DOE&password=abcd",
+        ResponseEntity<String> responseEntity = testRestTemplate.getForEntity("/api/v1/users/login?userName=JOHN DOE&password=abcd",
                 String.class);
         Assertions.assertEquals(HttpStatus.OK,  responseEntity.getStatusCode());
     }
@@ -68,9 +68,9 @@ public class UserControllerIntegrationTest {
      */
     @Test
     void testAddProfileToUser() throws MalformedURLException {
-        URI url = URI.create("/api/v1/user/profile?userid=299999&profileUrl=http://google.com");
+        URI url = URI.create("/api/v1/users/profile?userid=299999&profileUrl=http://google.com");
         testRestTemplate.put(url, null);
-        ResponseEntity<UserDto> responseEntity = testRestTemplate.getForEntity("/api/v1/user/299999/profile", UserDto.class);
+        ResponseEntity<UserDto> responseEntity = testRestTemplate.getForEntity("/api/v1/users/299999/profile", UserDto.class);
         Assertions.assertEquals(299999, responseEntity.getBody().getUserId() );
         Assertions.assertEquals( URI.create("http://google.com").toURL(), responseEntity.getBody().getProfileUri() );
     }
@@ -80,7 +80,7 @@ public class UserControllerIntegrationTest {
      */
     @Test
     void testGetUser()  {
-        ResponseEntity<UserDto> responseEntity = testRestTemplate.getForEntity("/api/v1/user/199999/profile", UserDto.class);
+        ResponseEntity<UserDto> responseEntity = testRestTemplate.getForEntity("/api/v1/users/199999/profile", UserDto.class);
         Assertions.assertEquals(HttpStatus.OK, responseEntity.getStatusCode() );
         Assertions.assertEquals(199999, responseEntity.getBody().getUserId() );
         Assertions.assertEquals("JOHN DOE", responseEntity.getBody().getUserName() );
@@ -97,7 +97,7 @@ public class UserControllerIntegrationTest {
     void testUploadImage() throws FileNotFoundException, URISyntaxException {
         File imageFile = ResourceUtils.getFile(
                 "classpath:sample.jpg");
-        URI postUrl = URI.create("/api/v1/user/image?fileName=" + imageFile.getAbsolutePath());
+        URI postUrl = URI.create("/api/v1/users/image?fileName=" + imageFile.getAbsolutePath());
 
         ResponseEntity<URL> responseEntity = testRestTemplate.postForEntity(postUrl, null, URL.class);
         Assertions.assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode() );
@@ -118,7 +118,7 @@ public class UserControllerIntegrationTest {
     void testDeleteImage() throws FileNotFoundException, URISyntaxException {
         File imageFile = ResourceUtils.getFile(
                 "classpath:sample.jpg");
-        URI postUrl = URI.create("/api/v1/user/image?fileName=" + imageFile.getAbsolutePath());
+        URI postUrl = URI.create("/api/v1/users/image?fileName=" + imageFile.getAbsolutePath());
 
         ResponseEntity<URL> responseEntity = testRestTemplate.postForEntity(postUrl, null, URL.class);
         Assertions.assertEquals(HttpStatus.ACCEPTED, responseEntity.getStatusCode() );
@@ -130,7 +130,7 @@ public class UserControllerIntegrationTest {
         String[] segments =  responseEntity.getBody().toURI().getPath().split("/");
         String lastSegment = segments[segments.length - 1];
         String imageHash = lastSegment.split(".jpeg")[0];
-        URI deleteUrl = URI.create("/api/v1/user/image?imageHash=" + imageHash);
+        URI deleteUrl = URI.create("/api/v1/users/image?imageHash=" + imageHash);
         testRestTemplate.delete(deleteUrl);
 
         //Get of the object should not be 200.
