@@ -7,10 +7,13 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import com.digitalservicing.usermanager.service.KafkaProducerService;
+import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
@@ -24,7 +27,11 @@ import java.net.URL;
  * The tests rely on the sample data under resources folder.
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@ActiveProfiles("test")
 public class UserControllerIntegrationTest {
+
+    @MockBean
+    private KafkaProducerService kafkaProducerService;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
