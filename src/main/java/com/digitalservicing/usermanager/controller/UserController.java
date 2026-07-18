@@ -3,11 +3,12 @@ package com.digitalservicing.usermanager.controller;
 import com.digitalservicing.usermanager.dto.UserDto;
 import com.digitalservicing.usermanager.entity.User;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
-import com.digitalservicing.usermanager.service.ImgurService;
-import com.digitalservicing.usermanager.service.KafkaProducerService;
-import com.digitalservicing.usermanager.service.UserService;
+import com.digitalservicing.usermanager.service.ImgurServiceImpl;
+import com.digitalservicing.usermanager.service.KafkaProducerServiceImpl;
+import com.digitalservicing.usermanager.service.UserServiceImpl;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
@@ -27,19 +28,13 @@ import java.net.URL;
 @RequestMapping("/api/v1")
 @Slf4j
 @Validated
-@Builder
+@AllArgsConstructor
 public class UserController {
-
-    @Autowired
-    private UserService userService;
-    @Autowired
-    private ImgurService imgurService;
-
-    @Autowired
-    private KafkaProducerService kafkaProducerService;
-
-    @Autowired
+    private UserServiceImpl userService;
+    private ImgurServiceImpl imgurService;
+    private KafkaProducerServiceImpl kafkaProducerService;
     private ModelMapper modelMapper;
+
 
     @GetMapping("/version")
     public String version(){

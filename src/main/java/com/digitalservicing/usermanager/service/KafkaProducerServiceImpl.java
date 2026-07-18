@@ -8,13 +8,12 @@ import org.springframework.stereotype.Service;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class KafkaProducerServiceImpl implements KafkaProducerService {
+public class KafkaProducerServiceImpl {
 
     private static final String TOPIC_NAME = "logged-in-users";
 
     private final KafkaTemplate<String, String> kafkaTemplate;
 
-    @Override
     public void sendMessage(String message) {
         kafkaTemplate.send(TOPIC_NAME, message)
             .whenComplete((result, ex) -> {

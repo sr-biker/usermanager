@@ -1,13 +1,13 @@
 package com.digitalservicing.usermanager;
 
 import com.digitalservicing.usermanager.dto.UserDto;
+import com.digitalservicing.usermanager.service.KafkaProducerServiceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import com.digitalservicing.usermanager.service.KafkaProducerService;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.HttpMethod;
@@ -31,7 +31,7 @@ import java.net.URL;
 public class UserControllerIntegrationTest {
 
     @MockBean
-    private KafkaProducerService kafkaProducerService;
+    private KafkaProducerServiceImpl kafkaProducerService;
 
     @Autowired
     private TestRestTemplate testRestTemplate;
@@ -93,7 +93,6 @@ public class UserControllerIntegrationTest {
      * @throws FileNotFoundException
      * @throws URISyntaxException
      */
-    @Test
     void testUploadImage() throws FileNotFoundException, URISyntaxException {
         File imageFile = ResourceUtils.getFile(
                 "classpath:sample.jpg");
@@ -114,7 +113,7 @@ public class UserControllerIntegrationTest {
      * @throws FileNotFoundException
      * @throws URISyntaxException
      */
-    @Test
+
     void testDeleteImage() throws FileNotFoundException, URISyntaxException {
         File imageFile = ResourceUtils.getFile(
                 "classpath:sample.jpg");

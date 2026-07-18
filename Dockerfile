@@ -1,4 +1,4 @@
-FROM openjdk:21-slim
+FROM eclipse-temurin:21-jdk-alpine
 
 # Make port 8080 available to the world outside this container
 EXPOSE 8080

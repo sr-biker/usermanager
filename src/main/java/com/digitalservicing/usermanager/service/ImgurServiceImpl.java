@@ -17,12 +17,11 @@ import java.util.Base64;
 
 @Service
 @Slf4j
-public class ImgurServiceImpl implements ImgurService{
+public class ImgurServiceImpl {
 
     @Value("${usermanager.imgur.accessToken}")
     private String imgurAccessToken;
 
-    @Override
     public URL uploadImage(File aFile) throws UnirestException, IOException {
         Unirest.setTimeouts(0, 0);
         HttpResponse<JsonNode> jsonResponse = Unirest.post("https://api.imgur.com/3/upload")
@@ -35,7 +34,6 @@ public class ImgurServiceImpl implements ImgurService{
         return URI.create(link).toURL();
     }
 
-    @Override
     public int getImage(String imageHash) throws UnirestException {
         Unirest.setTimeouts(0, 0);
         HttpResponse<JsonNode> jsonResponse = Unirest.get("https://api.imgur.com/3/image/ "+ imageHash)
@@ -45,7 +43,6 @@ public class ImgurServiceImpl implements ImgurService{
 
     }
 
-    @Override
     public int deleteImage(String imageHash) throws UnirestException {
         Unirest.setTimeouts(0, 0);
         HttpResponse<JsonNode> jsonResponse = Unirest.delete("https://api.imgur.com/3/image/" + imageHash)

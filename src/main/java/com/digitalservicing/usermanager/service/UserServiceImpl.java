@@ -6,6 +6,7 @@ import com.digitalservicing.usermanager.entity.UserProfile;
 import com.digitalservicing.usermanager.entity.User;
 import com.digitalservicing.usermanager.repository.UserProfileRepository;
 import com.digitalservicing.usermanager.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
@@ -16,7 +17,8 @@ import java.net.URL;
 import java.util.Optional;
 
 @Service
-public class UserServiceImpl implements UserService{
+@Slf4j
+public class UserServiceImpl {
 
     @Autowired
     private UserRepository userRepository;
@@ -25,13 +27,11 @@ public class UserServiceImpl implements UserService{
     private UserProfileRepository userProfileRepository;
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
-    @Override
     public User addUser(User user){
         return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
-    @Override
     public User login(String aUserName, String aPassword) {
         Optional<User>  optionalUser = userRepository.findUser(aUserName,
                 aPassword);
@@ -39,7 +39,6 @@ public class UserServiceImpl implements UserService{
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
-    @Override
     public void addProfileToUser(Long aUserId, URL url) {
         UserProfile userProfile = new UserProfile();
         userProfile.setProfileUri(url);
@@ -51,7 +50,6 @@ public class UserServiceImpl implements UserService{
         userRepository.save(user);
     }
 
-    @Override
     public User getUser(Long aUserId) {
         Optional<User> aUser = userRepository.findById(aUserId);
         return aUser.orElseThrow(UserNotFoundException::new);
