@@ -62,7 +62,7 @@ public class UserController {
         kafkaProducerService.sendMessage("Userid " + userid + " profileurl " + profileUrl);
     }
     @GetMapping("/users/{userid}/profile")
-    public UserDto getUser(@PathVariable Long userid) throws UserNotFoundException{
+    public UserDto getUser(@PathVariable("userid") Long userid) throws UserNotFoundException{
         log.info("Invoking get user with userid {}", userid);
         User user = this.userService.getUser(userid);
         return convertToDto(user);
