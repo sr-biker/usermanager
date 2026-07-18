@@ -9,10 +9,8 @@ import com.digitalservicing.usermanager.service.UserServiceImpl;
 import com.mashape.unirest.http.exceptions.UnirestException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -43,7 +41,7 @@ public class UserController {
 
     @PostMapping(value = "/users")
     @ResponseStatus(HttpStatus.CREATED)
-    public User addUser(@Valid User aUser){
+    public User addUser(@Valid @RequestBody User aUser){
         return this.userService.addUser(aUser);
     }
 
@@ -56,7 +54,7 @@ public class UserController {
 
     @PutMapping("/users/profile")
     @ResponseStatus(HttpStatus.CREATED)
-    public void addProfileToUser(@RequestParam Long userid, @RequestParam URL profileUrl) throws UserNotFoundException{
+    public void addProfileToUser(@RequestParam("userid") Long userid, @RequestParam("profileUrl") URL profileUrl) throws UserNotFoundException{
         log.info("Adding profile to user with userid {} and profile {}", userid, profileUrl);
         this.userService.addProfileToUser(userid, profileUrl);
         kafkaProducerService.sendMessage("Userid " + userid + " profileurl " + profileUrl);
