@@ -1,0 +1,68 @@
+replicaCount: 1
+
+image:
+  repository: usermanager
+  tag: latest
+  pullPolicy: IfNotPresent
+  # imagePullSecrets entry -- unset for local (kind loads images directly, no pull needed).
+  pullSecretName: ""
+
+# Used as the "environment" label on every k8s object this chart creates (metadata only —
+# never in selector.matchLabels, which stay stable via selectorLabels in _helpers.tpl).
+environment: local
+
+springProfile: local
+
+ingress:
+  enabled: false
+  className: nginx
+  host: ""
+  path: /
+  pathType: Prefix
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+probes:
+  liveness:
+    path: /actuator/health/liveness
+    initialDelaySeconds: 20
+    periodSeconds: 10
+    failureThreshold: 3
+  readiness:
+    path: /actuator/health/readiness
+    initialDelaySeconds: 15
+    periodSeconds: 5
+    failureThreshold: 3
+
+# host/port/name are never secret -- always plain env vars. username/password go through
+# a k8s Secret (templates/secret.yaml) unless existingSecret names one already created.
+db:
+  host: ""
+  port: "5432"
+  name: ""
+  username: ""
+  password: ""
+  existingSecret: ""
+
+kafka:
+  bootstrapServers: ""
+
+# S3 bucket name is not secret; access key/secret/session token go through
+# templates/secret.yaml unless existingSecret names one already created. Never put real
+# AWS credentials directly in a values file -- create the secret out-of-band instead
+# (see values-local.yaml's comment) and just reference it here.
+s3:
+  bucket: users-manager-profiles
+
+aws:
+  accessKeyId: ""
+  secretAccessKey: ""
+  sessionToken: ""
+  region: us-east-1
+  existingSecret: ""

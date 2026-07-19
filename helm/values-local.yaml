@@ -1,0 +1,48 @@
+replicaCount: 1
+
+image:
+  repository: usermanager-app
+  tag: latest
+  pullPolicy: IfNotPresent
+
+environment: local
+springProfile: local
+
+ingress:
+  enabled: true
+  # Path-scoped rather than catch-all "/" -- other apps share the local ingress
+  # controller too (see membership/contacts-micro-service's own values-local.yaml).
+  path: /api/v1
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi
+
+# Plain-text creds are fine for the local kind cluster; matches infra/local/postgres.yaml's
+# usermanager-db.sql init block (users/users/users -- same user/db-name convention as
+# membership's own local creds). Points at the shared postgres Service, not usermanager's
+# own separate standalone docker-compose Postgres -- those are two different environments.
+db:
+  host: postgres
+  port: "5432"
+  name: users
+  username: users
+  password: users
+
+# infra/local/kafka.yaml's Service -- same namespace, plain Service DNS.
+kafka:
+  bootstrapServers: kafka:9092
+
+# AWS credentials are real secrets even for local dev (this app actually calls S3) --
+# unlike db creds above, don't put them in this file. Create the secret yourself first:
+#   kubectl -n senthil-apis create secret generic usermanager-aws \
+#     --from-literal=AWS_ACCESS_KEY_ID=... \
+#     --from-literal=AWS_SECRET_ACCESS_KEY=... \
+#     --from-literal=AWS_SESSION_TOKEN=
+# then reference it here so templates/secret.yaml skips generating its own.
+aws:
+  existingSecret: usermanager-aws
