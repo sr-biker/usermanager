@@ -3,19 +3,19 @@ package com.digitalservicing.usermanager.controller;
 import com.digitalservicing.usermanager.dto.UserDto;
 import com.digitalservicing.usermanager.entity.User;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
-import com.digitalservicing.usermanager.service.ImgurServiceImpl;
+import com.digitalservicing.usermanager.service.S3ServiceImpl;
 import com.digitalservicing.usermanager.service.KafkaProducerServiceImpl;
 import com.digitalservicing.usermanager.service.UserServiceImpl;
-import com.mashape.unirest.http.exceptions.UnirestException;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 
@@ -29,7 +29,7 @@ import java.net.URL;
 @AllArgsConstructor
 public class UserController {
     private UserServiceImpl userService;
-    private ImgurServiceImpl imgurService;
+    private S3ServiceImpl s3Service;
     private KafkaProducerServiceImpl kafkaProducerService;
     private ModelMapper modelMapper;
 
@@ -66,24 +66,24 @@ public class UserController {
         return convertToDto(user);
     }
 
-    @PostMapping("/users/image")
+    @PostMapping(value = "/users/image", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @ResponseStatus(HttpStatus.ACCEPTED)
-    public URL uploadToImgur(@RequestParam("fileName") String fileName) throws UnirestException, IOException {
-        log.info("Invoking upload of Image with fileName {}", fileName);
-        return imgurService.uploadImage(new File(fileName));
+    public URL uploadImage(@RequestParam("file") MultipartFile file) throws IOException {
+        log.info("Invoking upload of Image with fileName {}", file.getOriginalFilename());
+        return s3Service.uploadImage(file);
     }
 
     @GetMapping("/users/image")
-    public void getFromImgur(@RequestParam String imageHash) throws UnirestException {
+    public void getImage(@RequestParam String imageHash) {
         log.info("Invoking Get of Image with hash {}", imageHash);
-        imgurService.getImage(imageHash);
+        s3Service.getImage(imageHash);
     }
 
     @DeleteMapping("/users/image")
-    public void deleteFromImgur(@RequestParam String imageHash) throws UnirestException {
+    public void deleteImage(@RequestParam String imageHash) {
         //TODO: Validate login
         log.info("Invoking Delete of Image with hash {}", imageHash);
-        imgurService.deleteImage(imageHash);
+        s3Service.deleteImage(imageHash);
     }
 
     @GetMapping("/users")
