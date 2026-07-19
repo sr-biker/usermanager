@@ -4,7 +4,6 @@ import com.digitalservicing.usermanager.dto.UserDto;
 import com.digitalservicing.usermanager.entity.User;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
 import com.digitalservicing.usermanager.service.S3ServiceImpl;
-import com.digitalservicing.usermanager.service.KafkaProducerServiceImpl;
 import com.digitalservicing.usermanager.service.UserServiceImpl;
 import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
@@ -30,7 +29,6 @@ import java.net.URL;
 public class UserController {
     private UserServiceImpl userService;
     private S3ServiceImpl s3Service;
-    private KafkaProducerServiceImpl kafkaProducerService;
     private ModelMapper modelMapper;
 
 
@@ -57,7 +55,6 @@ public class UserController {
     public void addProfileToUser(@RequestParam("userid") Long userid, @RequestParam("profileUrl") URL profileUrl) throws UserNotFoundException{
         log.info("Adding profile to user with userid {} and profile {}", userid, profileUrl);
         this.userService.addProfileToUser(userid, profileUrl);
-        kafkaProducerService.sendMessage("Userid " + userid + " profileurl " + profileUrl);
     }
     @GetMapping("/users/{userid}/profile")
     public UserDto getUser(@PathVariable("userid") Long userid) throws UserNotFoundException{

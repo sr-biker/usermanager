@@ -1,5 +1,6 @@
 package com.digitalservicing.usermanager.service;
 
+import com.digitalservicing.types.ProfileCreatedEvent;
 import com.digitalservicing.usermanager.exception.UserLoginException;
 import com.digitalservicing.usermanager.exception.UserNotFoundException;
 import com.digitalservicing.usermanager.entity.UserProfile;
@@ -15,6 +16,7 @@ import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.net.URL;
+import java.time.Instant;
 import java.util.Optional;
 
 @Service
@@ -24,6 +26,7 @@ public class UserServiceImpl {
 
     private UserRepository userRepository;
     private UserProfileRepository userProfileRepository;
+    private KafkaProducerServiceImpl kafkaProducerService;
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     public User addUser(User user){
@@ -37,7 +40,7 @@ public class UserServiceImpl {
         return optionalUser.orElseThrow(UserLoginException::new);
     }
 
-    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
+    @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED, transactionManager="transactionManager")
     public void addProfileToUser(Long aUserId, URL url) {
         UserProfile userProfile = new UserProfile();
         userProfile.setProfileUri(url);
@@ -47,6 +50,7 @@ public class UserServiceImpl {
         user.setUserId(aUserId);
         user.setUserProfile(userProfile);
         userRepository.save(user);
+        kafkaProducerService.sendEvent(new ProfileCreatedEvent("createprofile", aUserId, url.toString(), Instant.now()));
     }
 
     public User getUser(Long aUserId) {
