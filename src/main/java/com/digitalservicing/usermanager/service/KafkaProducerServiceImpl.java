@@ -19,7 +19,9 @@ public class KafkaProducerServiceImpl {
 
     public void sendEvent(ProfileCreatedEvent event) {
         try {
-            kafkaTemplate.send(TOPIC_NAME, event).get(5, TimeUnit.SECONDS);
+            // Keyed by userId so all events for the same user land on the same partition,
+            // guaranteeing per-user ordering (at the cost of even load spreading across partitions).
+            kafkaTemplate.send(TOPIC_NAME, event.userId().toString(), event).get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
             log.error("Failed to send event to topic {}: {}", TOPIC_NAME, e.getMessage());
             throw new RuntimeException("Failed to send event to topic " + TOPIC_NAME, e);
