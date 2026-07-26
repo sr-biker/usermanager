@@ -24,8 +24,7 @@ resources:
 
 # Plain-text creds are fine for the local kind cluster; matches infra/local/postgres.yaml's
 # usermanager-db.sql init block (users/users/users -- same user/db-name convention as
-# membership's own local creds). Points at the shared postgres Service, not usermanager's
-# own separate standalone docker-compose Postgres -- those are two different environments.
+# membership's own local creds). Points at the shared postgres Service.
 db:
   host: postgres
   port: "5432"
