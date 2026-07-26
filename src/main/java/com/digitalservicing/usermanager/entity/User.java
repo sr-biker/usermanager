@@ -19,6 +19,8 @@ public class User {
     @Nonnull
     private String userPassword;
 
+    private String phoneNumber;
+
     @OneToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "profileId")
     private UserProfile userProfile;

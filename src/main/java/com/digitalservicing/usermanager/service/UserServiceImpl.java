@@ -9,7 +9,6 @@ import com.digitalservicing.usermanager.repository.UserProfileRepository;
 import com.digitalservicing.usermanager.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -27,6 +26,7 @@ public class UserServiceImpl {
     private UserRepository userRepository;
     private UserProfileRepository userProfileRepository;
     private KafkaProducerServiceImpl kafkaProducerService;
+    private OtpService otpService;
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     public User addUser(User user){
@@ -37,7 +37,13 @@ public class UserServiceImpl {
     public User login(String aUserName, String aPassword) {
         Optional<User>  optionalUser = userRepository.findUser(aUserName,
                 aPassword);
-        return optionalUser.orElseThrow(UserLoginException::new);
+        User user = optionalUser.orElseThrow(UserLoginException::new);
+        otpService.sendOtp(user.getUserName(), user.getPhoneNumber());
+        return user;
+    }
+
+    public void verifyLoginOtp(String aUserName, String code) {
+        otpService.verifyOtp(aUserName, code);
     }
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED, transactionManager="transactionManager")

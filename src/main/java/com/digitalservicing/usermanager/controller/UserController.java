@@ -50,6 +50,13 @@ public class UserController {
         this.userService.login(userName, password);
     }
 
+    @GetMapping("/users/login/verify")
+    @ResponseStatus(HttpStatus.OK)
+    public void verifyLoginOtp(@RequestParam String userName, @RequestParam String code) {
+        log.info("Verifying OTP for {}", userName);
+        this.userService.verifyLoginOtp(userName, code);
+    }
+
     @PutMapping("/users/profile")
     @ResponseStatus(HttpStatus.CREATED)
     public void addProfileToUser(@RequestParam("userid") Long userid, @RequestParam("profileUrl") URL profileUrl) throws UserNotFoundException{
