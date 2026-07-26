@@ -16,8 +16,9 @@ public class MessageManagerClient {
 
     private final RestClient restClient;
 
-    public MessageManagerClient(@Value("${messagemanager.base-url}") String baseUrl) {
-        this.restClient = RestClient.create(baseUrl);
+    public MessageManagerClient(RestClient.Builder restClientBuilder,
+                                 @Value("${messagemanager.base-url}") String baseUrl) {
+        this.restClient = restClientBuilder.baseUrl(baseUrl).build();
     }
 
     public void sendSms(String toNumber, String body) {

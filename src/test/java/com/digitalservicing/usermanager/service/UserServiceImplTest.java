@@ -71,6 +71,7 @@ class UserServiceImplTest {
     void login_returnsUser_whenCredentialsMatch() {
         User user = new User();
         user.setUserName("JOHN DOE");
+        user.setPhoneNumber("+17037550417");
         when(userRepository.findUser("JOHN DOE", "abcd")).thenReturn(Optional.of(user));
 
         User result = userService.login("JOHN DOE", "abcd");
@@ -79,11 +80,32 @@ class UserServiceImplTest {
     }
 
     @Test
+    void login_sendsOtp_toTheUsersPhoneNumber_afterCredentialsMatch() {
+        User user = new User();
+        user.setUserName("JOHN DOE");
+        user.setPhoneNumber("+17037550417");
+        when(userRepository.findUser("JOHN DOE", "abcd")).thenReturn(Optional.of(user));
+
+        userService.login("JOHN DOE", "abcd");
+
+        verify(otpService).sendOtp("JOHN DOE", "+17037550417");
+    }
+
+    @Test
     void login_throwsUserLoginException_whenCredentialsDoNotMatch() {
         when(userRepository.findUser("JOHN DOE", "wrong")).thenReturn(Optional.empty());
 
         assertThatThrownBy(() -> userService.login("JOHN DOE", "wrong"))
                 .isInstanceOf(UserLoginException.class);
+
+        verify(otpService, never()).sendOtp(any(), any());
+    }
+
+    @Test
+    void verifyLoginOtp_delegatesToOtpService() {
+        userService.verifyLoginOtp("JOHN DOE", "123456");
+
+        verify(otpService).verifyOtp("JOHN DOE", "123456");
     }
 
     @Test
