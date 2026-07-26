@@ -19,7 +19,7 @@ public class KafkaProducerServiceImpl {
 
     public void sendEvent(ProfileCreatedEvent event) {
         try {
-            // Sharded/keyed by userId so all events for the same user land on the same partition,
+            // Partitioned/keyed by userId so all events for the same user land on the same partition,
             // guaranteeing per-user ordering (at the cost of even load spreading across partitions).
             kafkaTemplate.send(TOPIC_NAME, event.userId().toString(), event).get(5, TimeUnit.SECONDS);
         } catch (Exception e) {
