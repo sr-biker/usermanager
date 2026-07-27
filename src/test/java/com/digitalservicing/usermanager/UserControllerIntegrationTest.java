@@ -8,15 +8,17 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mock;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.util.ReflectionTestUtils;
 import org.springframework.util.ResourceUtils;
 
 import java.io.File;
@@ -26,9 +28,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 /**
  * The tests rely on the sample data under resources folder.
@@ -46,6 +51,17 @@ public class UserControllerIntegrationTest {
     @MockBean
     private MessageManagerClient messageManagerClient;
 
+    // Real StringRedisTemplate would need an actual Redis instance reachable from this
+    // test's context. Faked in-memory instead so the real OtpService bean (used below,
+    // unmocked, for the actual end-to-end OTP flow) still has somewhere to read/write to.
+    @MockBean
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
+
+    private final Map<String, String> fakeRedisStore = new ConcurrentHashMap<>();
+
     @Autowired
     private OtpService otpService;
 
@@ -57,7 +73,12 @@ public class UserControllerIntegrationTest {
 
     @BeforeEach
     void setUp(){
-
+        org.mockito.MockitoAnnotations.openMocks(this);
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get(any())).thenAnswer(invocation -> fakeRedisStore.get(invocation.getArgument(0, String.class)));
+        doAnswer(invocation -> fakeRedisStore.put(invocation.getArgument(0, String.class), invocation.getArgument(1, String.class)))
+                .when(valueOperations).set(any(), any(), any());
+        when(redisTemplate.delete(org.mockito.ArgumentMatchers.<String>any())).thenAnswer(invocation -> fakeRedisStore.remove(invocation.getArgument(0, String.class)) != null);
     }
 
     /**
@@ -107,11 +128,8 @@ public class UserControllerIntegrationTest {
         Assertions.assertEquals(HttpStatus.UNAUTHORIZED, verifyResponse.getStatusCode());
     }
 
-    @SuppressWarnings("unchecked")
     private String codeSentTo(String userName) {
-        Map<String, Object> otpsByUserName = (Map<String, Object>) ReflectionTestUtils.getField(otpService, "otpsByUserName");
-        Object otp = otpsByUserName.get(userName);
-        return (String) ReflectionTestUtils.getField(otp, "code");
+        return fakeRedisStore.get("otp:" + userName);
     }
 
     /**

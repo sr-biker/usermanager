@@ -34,6 +34,17 @@ spec:
               value: "jdbc:postgresql://{{ .Values.db.host }}:{{ .Values.db.port }}/{{ .Values.db.name }}"
             - name: SPRING_KAFKA_BOOTSTRAP_SERVERS
               value: {{ .Values.kafka.bootstrapServers | quote }}
+            - name: SPRING_DATA_REDIS_HOST
+              value: {{ .Values.redis.host | quote }}
+            - name: SPRING_DATA_REDIS_PORT
+              value: {{ .Values.redis.port | quote }}
+            {{- if .Values.redis.clusterNodes }}
+            # Presence, not value, is what flips Lettuce into cluster mode -- only set
+            # when clusterNodes is actually non-empty, same reasoning as the app's own
+            # application.properties comment.
+            - name: SPRING_DATA_REDIS_CLUSTER_NODES
+              value: {{ .Values.redis.clusterNodes | quote }}
+            {{- end }}
             - name: USERMANAGER_S3_BUCKET
               value: {{ .Values.s3.bucket | quote }}
             - name: AWS_REGION
@@ -43,6 +54,8 @@ spec:
                 name: {{ include "usermanager.dbSecretName" . }}
             - secretRef:
                 name: {{ include "usermanager.awsSecretName" . }}
+            - secretRef:
+                name: {{ include "usermanager.redisSecretName" . }}
           # Liveness only checks the in-process livenessState — never Postgres — so a DB
           # outage doesn't cause Kubernetes to kill and restart otherwise-healthy pods.
           livenessProbe:

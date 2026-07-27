@@ -3,33 +3,32 @@ package com.digitalservicing.usermanager.service;
 import com.digitalservicing.usermanager.exception.UserLoginException;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.security.SecureRandom;
-import java.time.Instant;
-import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
+import java.time.Duration;
 
 /**
- * In-memory OTP store -- fine for a single-replica demo, not for prod (lost on
- * restart, doesn't work across replicas). A real implementation would use Redis
- * or the DB.
+ * OTPs live in Redis (not this instance's heap) so they survive a pod restart and are
+ * visible to whichever replica handles the verify request, not just the one that sent it.
  */
 @Service
 @Slf4j
 @AllArgsConstructor
 public class OtpService {
 
-    private static final long OTP_TTL_SECONDS = 300;
+    private static final Duration OTP_TTL = Duration.ofSeconds(300);
+    private static final String KEY_PREFIX = "otp:";
 
     private final SecureRandom random = new SecureRandom();
-    private final Map<String, Otp> otpsByUserName = new ConcurrentHashMap<>();
+    private final StringRedisTemplate redisTemplate;
 
     private final MessageManagerClient messageManagerClient;
 
     public void sendOtp(String userName, String phoneNumber) {
         String code = String.format("%06d", random.nextInt(1_000_000));
-        otpsByUserName.put(userName, new Otp(code, Instant.now().plusSeconds(OTP_TTL_SECONDS)));
+        redisTemplate.opsForValue().set(key(userName), code, OTP_TTL);
         // The prod Twilio account is still in trial mode, which rejects arbitrary
         // message bodies ("Invalid template name. Trial accounts can only use
         // predefined SMS templates.") -- sms_appointment_reminders is one of Twilio's
@@ -39,13 +38,14 @@ public class OtpService {
     }
 
     public void verifyOtp(String userName, String code) {
-        Otp otp = otpsByUserName.get(userName);
-        if (otp == null || otp.expiresAt.isBefore(Instant.now()) || !otp.code.equals(code)) {
+        String storedCode = redisTemplate.opsForValue().get(key(userName));
+        if (storedCode == null || !storedCode.equals(code)) {
             throw new UserLoginException();
         }
-        otpsByUserName.remove(userName);
+        redisTemplate.delete(key(userName));
     }
 
-    private record Otp(String code, Instant expiresAt) {
+    private String key(String userName) {
+        return KEY_PREFIX + userName;
     }
 }

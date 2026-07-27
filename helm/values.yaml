@@ -53,6 +53,18 @@ db:
 kafka:
   bootstrapServers: ""
 
+# host/port are never secret. clusterNodes is empty by default -- standalone Lettuce
+# connection (host/port). Set it (comma-separated host:port list) to switch the app into
+# Redis Cluster mode instead; leave it "" for a single local Redis. Password goes through
+# a k8s Secret (templates/secret.yaml) unless existingSecret names one already created --
+# leave it blank if the Redis instance has no auth (e.g. local kind).
+redis:
+  host: ""
+  port: "6379"
+  clusterNodes: ""
+  password: ""
+  existingSecret: ""
+
 # S3 bucket name is not secret; access key/secret/session token go through
 # templates/secret.yaml unless existingSecret names one already created. Never put real
 # AWS credentials directly in a values file -- create the secret out-of-band instead

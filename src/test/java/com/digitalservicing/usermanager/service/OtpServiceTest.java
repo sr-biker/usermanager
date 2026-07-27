@@ -6,14 +6,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.test.util.ReflectionTestUtils;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
-import java.time.Instant;
-import java.util.Map;
+import java.time.Duration;
 
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class OtpServiceTest {
@@ -21,37 +25,52 @@ class OtpServiceTest {
     @Mock
     private MessageManagerClient messageManagerClient;
 
+    @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
+
     @InjectMocks
     private OtpService otpService;
 
     @Test
     void sendOtp_sendsTrialTemplateBody_toGivenPhoneNumber() {
+        lenient().when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
         otpService.sendOtp("JOHN DOE", "+17037550417");
 
         verify(messageManagerClient).sendSms("+17037550417", "sms_appointment_reminders");
     }
 
     @Test
-    void verifyOtp_succeeds_whenCodeMatchesTheOneJustSent() {
+    void sendOtp_storesTheCode_withA300SecondTtl() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
         otpService.sendOtp("JOHN DOE", "+17037550417");
-        String code = codeSentTo("JOHN DOE");
+
+        verify(valueOperations).set(eq("otp:JOHN DOE"), any(), eq(Duration.ofSeconds(300)));
+    }
+
+    @Test
+    void verifyOtp_succeeds_whenCodeMatchesTheOneJustSent() {
+        String code = stubStoredCode("JOHN DOE", "123456");
 
         assertThatCode(() -> otpService.verifyOtp("JOHN DOE", code)).doesNotThrowAnyException();
     }
 
     @Test
     void verifyOtp_consumesTheCode_soItCannotBeReused() {
-        otpService.sendOtp("JOHN DOE", "+17037550417");
-        String code = codeSentTo("JOHN DOE");
-        otpService.verifyOtp("JOHN DOE", code);
+        stubStoredCode("JOHN DOE", "123456");
 
-        assertThatThrownBy(() -> otpService.verifyOtp("JOHN DOE", code))
-                .isInstanceOf(UserLoginException.class);
+        otpService.verifyOtp("JOHN DOE", "123456");
+
+        verify(redisTemplate).delete("otp:JOHN DOE");
     }
 
     @Test
     void verifyOtp_throws_whenCodeIsWrong() {
-        otpService.sendOtp("JOHN DOE", "+17037550417");
+        stubStoredCode("JOHN DOE", "123456");
 
         assertThatThrownBy(() -> otpService.verifyOtp("JOHN DOE", "000000"))
                 .isInstanceOf(UserLoginException.class);
@@ -59,37 +78,29 @@ class OtpServiceTest {
 
     @Test
     void verifyOtp_throws_whenNoOtpWasEverSent() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("otp:UNKNOWN USER")).thenReturn(null);
+
         assertThatThrownBy(() -> otpService.verifyOtp("UNKNOWN USER", "123456"))
                 .isInstanceOf(UserLoginException.class);
     }
 
+    /**
+     * TTL expiry is enforced server-side by Redis -- a mock can't age, so an expired
+     * code is indistinguishable here from a key that was never set/already evicted.
+     */
     @Test
-    void verifyOtp_throws_whenCodeHasExpired() throws Exception {
-        otpService.sendOtp("JOHN DOE", "+17037550417");
-        String code = codeSentTo("JOHN DOE");
-        expire("JOHN DOE");
+    void verifyOtp_throws_whenTheKeyHasExpiredOrWasNeverSet() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("otp:JOHN DOE")).thenReturn(null);
 
-        assertThatThrownBy(() -> otpService.verifyOtp("JOHN DOE", code))
+        assertThatThrownBy(() -> otpService.verifyOtp("JOHN DOE", "123456"))
                 .isInstanceOf(UserLoginException.class);
     }
 
-    @SuppressWarnings("unchecked")
-    private String codeSentTo(String userName) {
-        Map<String, Object> otpsByUserName = (Map<String, Object>) ReflectionTestUtils.getField(otpService, "otpsByUserName");
-        Object otp = otpsByUserName.get(userName);
-        return (String) ReflectionTestUtils.getField(otp, "code");
-    }
-
-    @SuppressWarnings("unchecked")
-    private void expire(String userName) throws Exception {
-        // Otp is a record -- its components are truly final (even reflection can't set
-        // them) -- so replace the whole map entry with one whose expiresAt is in the past.
-        Map<String, Object> otpsByUserName = (Map<String, Object>) ReflectionTestUtils.getField(otpService, "otpsByUserName");
-        Object otp = otpsByUserName.get(userName);
-        Class<?> otpClass = otp.getClass();
-        var constructor = otpClass.getDeclaredConstructor(String.class, Instant.class);
-        constructor.setAccessible(true);
-        Object expiredOtp = constructor.newInstance(ReflectionTestUtils.getField(otp, "code"), Instant.now().minusSeconds(1));
-        otpsByUserName.put(userName, expiredOtp);
+    private String stubStoredCode(String userName, String code) {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("otp:" + userName)).thenReturn(code);
+        return code;
     }
 }

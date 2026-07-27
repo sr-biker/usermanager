@@ -27,3 +27,11 @@ environment: {{ .Values.environment }}
 {{ include "usermanager.name" . }}-aws
 {{- end -}}
 {{- end -}}
+
+{{- define "usermanager.redisSecretName" -}}
+{{- if .Values.redis.existingSecret -}}
+{{ .Values.redis.existingSecret }}
+{{- else -}}
+{{ include "usermanager.name" . }}-redis
+{{- end -}}
+{{- end -}}
