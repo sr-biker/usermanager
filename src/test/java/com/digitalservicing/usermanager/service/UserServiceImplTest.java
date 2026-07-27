@@ -13,6 +13,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.net.MalformedURLException;
 import java.net.URI;
@@ -47,24 +48,30 @@ class UserServiceImplTest {
     @Mock
     private OtpService otpService;
 
+    @Mock
+    private PasswordEncoder passwordEncoder;
+
     private UserServiceImpl userService;
 
     @BeforeEach
     void setUp() {
-        userService = new UserServiceImpl(userRepository, userProfileRepository, kafkaProducerService, otpService);
+        userService = new UserServiceImpl(userRepository, userProfileRepository, kafkaProducerService, otpService, passwordEncoder);
     }
 
     @Test
-    void addUser_savesAndReturnsUser() {
+    void addUser_savesAndReturnsUser_withThePasswordHashed() {
         User user = new User();
         user.setUserName("JOHN DOE");
         user.setUserPassword("abcd");
+        when(passwordEncoder.encode("abcd")).thenReturn("hashed-abcd");
         when(userRepository.save(user)).thenReturn(user);
 
         User result = userService.addUser(user);
 
         assertThat(result).isSameAs(user);
-        verify(userRepository).save(user);
+        ArgumentCaptor<User> savedCaptor = ArgumentCaptor.forClass(User.class);
+        verify(userRepository).save(savedCaptor.capture());
+        assertThat(savedCaptor.getValue().getUserPassword()).isEqualTo("hashed-abcd");
     }
 
     @Test
@@ -72,7 +79,9 @@ class UserServiceImplTest {
         User user = new User();
         user.setUserName("JOHN DOE");
         user.setPhoneNumber("+17037550417");
-        when(userRepository.findUser("JOHN DOE", "abcd")).thenReturn(Optional.of(user));
+        user.setUserPassword("hashed-abcd");
+        when(userRepository.findByUserName("JOHN DOE")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("abcd", "hashed-abcd")).thenReturn(true);
 
         User result = userService.login("JOHN DOE", "abcd");
 
@@ -84,7 +93,9 @@ class UserServiceImplTest {
         User user = new User();
         user.setUserName("JOHN DOE");
         user.setPhoneNumber("+17037550417");
-        when(userRepository.findUser("JOHN DOE", "abcd")).thenReturn(Optional.of(user));
+        user.setUserPassword("hashed-abcd");
+        when(userRepository.findByUserName("JOHN DOE")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("abcd", "hashed-abcd")).thenReturn(true);
 
         userService.login("JOHN DOE", "abcd");
 
@@ -92,8 +103,22 @@ class UserServiceImplTest {
     }
 
     @Test
-    void login_throwsUserLoginException_whenCredentialsDoNotMatch() {
-        when(userRepository.findUser("JOHN DOE", "wrong")).thenReturn(Optional.empty());
+    void login_throwsUserLoginException_whenUserNotFound() {
+        when(userRepository.findByUserName("JOHN DOE")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> userService.login("JOHN DOE", "wrong"))
+                .isInstanceOf(UserLoginException.class);
+
+        verify(otpService, never()).sendOtp(any(), any());
+    }
+
+    @Test
+    void login_throwsUserLoginException_whenPasswordDoesNotMatch() {
+        User user = new User();
+        user.setUserName("JOHN DOE");
+        user.setUserPassword("hashed-abcd");
+        when(userRepository.findByUserName("JOHN DOE")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("wrong", "hashed-abcd")).thenReturn(false);
 
         assertThatThrownBy(() -> userService.login("JOHN DOE", "wrong"))
                 .isInstanceOf(UserLoginException.class);

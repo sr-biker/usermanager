@@ -1,5 +1,6 @@
 package com.digitalservicing.usermanager.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.annotation.Nonnull;
 import jakarta.persistence.*;
 import lombok.Data;
@@ -17,6 +18,7 @@ public class User {
     @Nonnull
     private String userName;
     @Nonnull
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private String userPassword;
 
     private String phoneNumber;

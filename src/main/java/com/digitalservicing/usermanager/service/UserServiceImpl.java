@@ -9,6 +9,7 @@ import com.digitalservicing.usermanager.repository.UserProfileRepository;
 import com.digitalservicing.usermanager.repository.UserRepository;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Isolation;
 import org.springframework.transaction.annotation.Propagation;
@@ -27,17 +28,21 @@ public class UserServiceImpl {
     private UserProfileRepository userProfileRepository;
     private KafkaProducerServiceImpl kafkaProducerService;
     private OtpService otpService;
+    private PasswordEncoder passwordEncoder;
 
     @Transactional(isolation = Isolation.READ_COMMITTED, propagation = Propagation.REQUIRED)
     public User addUser(User user){
+        user.setUserPassword(passwordEncoder.encode(user.getUserPassword()));
         return userRepository.save(user);
     }
 
     @Transactional(readOnly = true)
     public User login(String aUserName, String aPassword) {
-        Optional<User>  optionalUser = userRepository.findUser(aUserName,
-                aPassword);
+        Optional<User> optionalUser = userRepository.findByUserName(aUserName);
         User user = optionalUser.orElseThrow(UserLoginException::new);
+        if (!passwordEncoder.matches(aPassword, user.getUserPassword())) {
+            throw new UserLoginException();
+        }
         otpService.sendOtp(user.getUserName(), user.getPhoneNumber());
         return user;
     }
