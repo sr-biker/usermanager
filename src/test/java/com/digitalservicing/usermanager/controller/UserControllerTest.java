@@ -74,6 +74,7 @@ class UserControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.userId").value(1))
                 .andExpect(jsonPath("$.userName").value("JANE DOE"));
+        verify(userService, times(1)).addUser(any(User.class));
     }
 
     @Test
@@ -83,7 +84,7 @@ class UserControllerTest {
                         .param("password", "abcd"))
                 .andExpect(status().isOk());
 
-        verify(userService).login("JOHN DOE", "abcd");
+        verify(userService, times(1)).login("JOHN DOE", "abcd");
     }
 
     @Test
@@ -93,7 +94,7 @@ class UserControllerTest {
                         .param("code", "123456"))
                 .andExpect(status().isOk());
 
-        verify(userService).verifyLoginOtp("JOHN DOE", "123456");
+        verify(userService, times(1)).verifyLoginOtp("JOHN DOE", "123456");
     }
 
     @Test
@@ -103,7 +104,7 @@ class UserControllerTest {
                         .param("profileUrl", "http://google.com"))
                 .andExpect(status().isCreated());
 
-        verify(userService).addProfileToUser(eq(299999L), eq(URI.create("http://google.com").toURL()));
+        verify(userService, times(1)).addProfileToUser(eq(299999L), eq(URI.create("http://google.com").toURL()));
     }
 
     @Test
