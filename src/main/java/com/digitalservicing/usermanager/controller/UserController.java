@@ -90,11 +90,6 @@ public class UserController {
         s3Service.deleteImage(imageHash);
     }
 
-    @GetMapping("/users")
-    public void exportCsv(){
-
-    }
-
     private UserDto convertToDto(User user) {
         UserDto userDto = modelMapper.map(user, UserDto.class);
         if (user.getUserProfile() != null) {
