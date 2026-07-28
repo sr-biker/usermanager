@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
+import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.PostgreSQLContainer;
@@ -27,13 +28,16 @@ import static org.assertj.core.api.Assertions.assertThat;
 class UserRepositoryContainerIntegrationTest {
 
     @Container
+    @ServiceConnection
     static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine");
 
+    /**
+     * @ServiceConnection wires the datasource connection itself; schema.sql init
+     * still needs to be pointed at the container explicitly and Hibernate ddl-auto
+     * turned off so it doesn't fight the real schema.
+     */
     @DynamicPropertySource
-    static void datasourceProperties(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
+    static void schemaInitProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.sql.init.mode", () -> "always");
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "none");
         registry.add("spring.jpa.defer-datasource-initialization", () -> "true");
